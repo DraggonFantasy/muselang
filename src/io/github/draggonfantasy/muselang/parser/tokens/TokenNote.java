@@ -8,9 +8,9 @@ public class TokenNote extends Token
 
     private final Note note;
 
-    public TokenNote(String tokenStr)
+    public TokenNote(String tokenStr, int line, int column)
     {
-        super(tokenStr);
+        super(tokenStr, line, column);
         String fullNoteStr = tokenStr;
         if( !Character.isDigit(tokenStr.charAt(tokenStr.length()-1)) )
         {

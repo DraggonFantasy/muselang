@@ -4,9 +4,9 @@ public class TokenKeyword extends Token
 {
     public static final String TOKEN_ID = "keyword";
 
-    public TokenKeyword(String tokenStr)
+    public TokenKeyword(String tokenStr, int line, int column)
     {
-        super(tokenStr);
+        super(tokenStr, line, column);
     }
 
     @Override

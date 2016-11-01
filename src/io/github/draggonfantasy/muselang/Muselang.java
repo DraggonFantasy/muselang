@@ -1,11 +1,10 @@
 package io.github.draggonfantasy.muselang;
 
-import io.github.draggonfantasy.muselang.core.*;
+import io.github.draggonfantasy.muselang.core.Music;
 import io.github.draggonfantasy.muselang.interpreter.MuseInterpreter;
 import io.github.draggonfantasy.muselang.parser.MuseLexer;
 import io.github.draggonfantasy.muselang.parser.MuseParser;
-import io.github.draggonfantasy.muselang.parser.ParserException;
-import io.github.draggonfantasy.muselang.parser.tokens.Token;
+import io.github.draggonfantasy.muselang.parser.MuseSyntaxException;
 
 import javax.sound.midi.*;
 import java.io.File;
@@ -26,16 +25,25 @@ public class Muselang
         }
 
         MuseInterpreter interpreter = new MuseInterpreter();
-        String code = Files.readAllLines( Paths.get(args[1]) ).stream().collect(Collectors.joining("\n"));
+
+        List<String> lines = Files.readAllLines(Paths.get(args[1]));
+        String code = lines.stream().collect(Collectors.joining("\n"));
         Music music;
         Sequence seq;
         try
         {
             music = new MuseParser().parse(new MuseLexer().lex(code));
             seq = interpreter.toMidiSequence(music);
-        } catch (ParserException e)
+        } catch (MuseSyntaxException e)
         {
             System.err.println("Syntax error:\n" + e.getMessage());
+            System.err.println(lines.get(e.getLine() - 1));
+            for(int i = 0; i < e.getColumn() - 1; ++i)
+            {
+                if( lines.get(e.getLine() - 1).charAt(i) == '\t' ) System.err.print("\t");
+                System.err.print(" ");
+            }
+            System.err.println("^");
             return;
         }
 

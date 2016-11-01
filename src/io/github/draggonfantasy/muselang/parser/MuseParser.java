@@ -18,7 +18,7 @@ public class MuseParser
 
     private Map<String, Phrase> phrases;
 
-    public Music parse(List<Token> tokens) throws ParserException
+    public Music parse(List<Token> tokens) throws MuseSyntaxException
     {
         this.tokens = tokens;
         this.pos = 0;
@@ -27,7 +27,7 @@ public class MuseParser
         return musicProgram();
     }
 
-    private int duration() throws ParserException
+    private int duration() throws MuseSyntaxException
     {
         if(token() instanceof TokenInteger)
         {
@@ -45,7 +45,7 @@ public class MuseParser
         return -1;
     }
 
-    private MusicUnit scoreNote() throws ParserException
+    private MusicUnit scoreNote() throws MuseSyntaxException
     {
         if( !(token() instanceof TokenNote) )
         {
@@ -53,7 +53,7 @@ public class MuseParser
             {
                 next();
                 int duration = duration();
-                if( duration == -1 ) throw new ParserException("ScoreNote: expected duration but found " + token().getTokenId());
+                syntaxErrorIf(duration == -1, "ScoreNote: expected duration but found " + token().getTokenId(), token().getLine(), token().getColumn());
                 next();
 
                 return new Pause(duration);
@@ -65,39 +65,42 @@ public class MuseParser
         next();
         int duration = duration();
         next();
-        if( duration == -1 ) throw new ParserException("ScoreNote: expected duration but found " + token().getTokenId());
+        syntaxErrorIf(duration == -1, "ScoreNote: expected duration but found " + token().getTokenId(), token().getLine(), token().getColumn());
         int velocity = integer();
-        if( velocity == -1 ) throw new ParserException("ScoreNote: expected velocity but found " + token().getTokenId());
+        syntaxErrorIf(velocity == -1, "ScoreNote: expected velocity but found " + token().getTokenId(), token().getLine(), token().getColumn());
         next();
 
         return new ScoreNote(note, duration, velocity);
     }
 
-    private Phrase phrase() throws ParserException
+    private Phrase phrase() throws MuseSyntaxException
     {
         if( !(token() instanceof TokenKeyword && token().getTokenStr().equals("phrase")) ) return null;
 
         next();
-        if( !(token() instanceof TokenIdentifier) ) throw new ParserException("Phrase: expected identifier but found " + token().getTokenId());
+        syntaxErrorIf(!(token() instanceof TokenIdentifier),
+                      "Phrase: expected identifier but found " + token().getTokenId(), token().getLine(), token().getColumn());
         String identifier = ((TokenIdentifier) token()).getIdentifier();
         next();
 
-        if( !(token() instanceof TokenOperator && token().getTokenStr().equals("{")) ) throw new ParserException("Phrase: expected { but found " + token().getTokenId());
+        syntaxErrorIf(!(token() instanceof TokenOperator && token().getTokenStr().equals("{")),
+                      "Phrase: expected { but found " + token().getTokenId(), token().getLine(), token().getColumn());
 
         next();
         List<MusicUnit> phraseUnits = musicBlock();
 
-        if( !(token() instanceof TokenOperator && token().getTokenStr().equals("}")) ) throw new ParserException("Phrase: expected } but found " + token().getTokenId());
+        syntaxErrorIf(!(token() instanceof TokenOperator && token().getTokenStr().equals("}")),
+                      "Phrase: expected } but found " + token().getTokenId(), token().getLine(), token().getColumn());
         next();
 
         Phrase phrase = new Phrase(identifier, phraseUnits);
-        if(phrases.containsKey(identifier)) throw new ParserException("Phrase: overriding phrases is not allowed: " + identifier);
+        syntaxErrorIf(phrases.containsKey(identifier), "Phrase: overriding phrases is not allowed: " + identifier, token().getLine(), token().getColumn());
 
         phrases.put(identifier, phrase);
         return phrase;
     }
 
-    private List<MusicUnit> musicBlock() throws ParserException
+    private List<MusicUnit> musicBlock() throws MuseSyntaxException
     {
         List<MusicUnit> units = new ArrayList<>();
         while(true)
@@ -110,7 +113,7 @@ public class MuseParser
             {
                 String identifier = ((TokenIdentifier) token()).getIdentifier();
                 Phrase phrase = phrases.get(identifier);
-                if(phrase == null) throw new ParserException("Unknown phrase '" + identifier + "'");
+                syntaxErrorIf(phrase == null, "Unknown phrase '" + identifier + "'", token().getLine(), token().getColumn());
                 next();
                 unit = phrase;
                 units.add(unit);
@@ -122,7 +125,7 @@ public class MuseParser
         return units;
     }
 
-    private Music musicProgram() throws ParserException
+    private Music musicProgram() throws MuseSyntaxException
     {
         //noinspection StatementWithEmptyBody
         while( phrase() != null ) {}
@@ -152,5 +155,10 @@ public class MuseParser
         if( tokens.size() <= pos ) return null;
 
         return tokens.get(pos);
+    }
+
+    private void syntaxErrorIf(boolean condition, String msg, int line, int column) throws MuseSyntaxException
+    {
+        if( condition ) throw new MuseSyntaxException(msg, line, column);
     }
 }

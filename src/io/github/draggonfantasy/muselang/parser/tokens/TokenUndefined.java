@@ -5,9 +5,9 @@ public class TokenUndefined extends Token
 {
     public static final String TOKEN_ID = "undefined";
 
-    public TokenUndefined(String str)
+    public TokenUndefined(String str, int line, int column)
     {
-        super(str);
+        super(str, line, column);
     }
 
     @Override

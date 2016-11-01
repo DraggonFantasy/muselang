@@ -6,9 +6,9 @@ public class TokenIdentifier extends Token
 
     private final String identifier;
 
-    public TokenIdentifier(String str)
+    public TokenIdentifier(String str, int line, int column)
     {
-        super(str);
+        super(str, line, column);
         identifier = str;
     }
 

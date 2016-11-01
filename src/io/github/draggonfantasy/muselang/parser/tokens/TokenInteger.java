@@ -6,9 +6,9 @@ public class TokenInteger extends Token
 
     private final int value;
 
-    public TokenInteger(String tokenStr)
+    public TokenInteger(String tokenStr, int line, int column)
     {
-        super(tokenStr);
+        super(tokenStr, line, column);
         this.value = Integer.parseUnsignedInt(tokenStr);
     }
 
