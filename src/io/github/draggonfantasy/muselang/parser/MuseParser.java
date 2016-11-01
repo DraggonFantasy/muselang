@@ -13,6 +13,8 @@ import java.util.Map;
  */
 public class MuseParser
 {
+    public static final int DEFAULT_VELOCITY = 127;
+    public static final int DEFAULT_DURATION = 4;
     private List<Token> tokens;
     private int pos;
 
@@ -64,8 +66,10 @@ public class MuseParser
 
         next();
         int duration = duration();
-        next();
+        if(duration == -1) return new ScoreNote(note, DEFAULT_DURATION, DEFAULT_VELOCITY);
+
         syntaxErrorIf(duration == -1, "ScoreNote: expected duration but found " + token().getTokenId(), token().getLine(), token().getColumn());
+        next();
         int velocity = integer();
         syntaxErrorIf(velocity == -1, "ScoreNote: expected velocity but found " + token().getTokenId(), token().getLine(), token().getColumn());
         next();
