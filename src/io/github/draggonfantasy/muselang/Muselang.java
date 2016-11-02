@@ -2,6 +2,7 @@ package io.github.draggonfantasy.muselang;
 
 import io.github.draggonfantasy.muselang.core.Music;
 import io.github.draggonfantasy.muselang.interpreter.MuseInterpreter;
+import io.github.draggonfantasy.muselang.interpreter.MuseRuntimeException;
 import io.github.draggonfantasy.muselang.parser.MuseLexer;
 import io.github.draggonfantasy.muselang.parser.MuseParser;
 import io.github.draggonfantasy.muselang.parser.MuseSyntaxException;
@@ -44,6 +45,10 @@ public class Muselang
                 System.err.print(" ");
             }
             System.err.println("^");
+            return;
+        } catch (MuseRuntimeException e)
+        {
+            System.err.println("Runtime error:\n" + e.getMessage());
             return;
         }
 

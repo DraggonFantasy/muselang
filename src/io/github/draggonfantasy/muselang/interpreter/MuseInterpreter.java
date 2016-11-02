@@ -10,7 +10,7 @@ public class MuseInterpreter
     private static final int CHANNEL = 10;
     private static final int RESOLUTION = 60;
 
-    public Sequence toMidiSequence(Music music) throws InvalidMidiDataException
+    public Sequence toMidiSequence(Music music) throws InvalidMidiDataException, MuseRuntimeException
     {
         Sequence seq = new Sequence(Sequence.PPQ, RESOLUTION);
         Track track = seq.createTrack();
@@ -19,23 +19,28 @@ public class MuseInterpreter
         long tick = 0;
         for (MusicUnit unit : musicUnits)
         {
-            tick = addUnitToTrack(track, tick, unit);
+            tick = addUnitToTrack(music, track, tick, unit);
         }
 
         return seq;
     }
 
-    private long addUnitToTrack(Track track, long tick, MusicUnit unit) throws InvalidMidiDataException
+    private long addUnitToTrack(Music music, Track track, long tick, MusicUnit unit) throws InvalidMidiDataException, MuseRuntimeException
     {
         if (unit instanceof ScoreNote)
         {
             tick = addNoteToTrack(track, tick, (ScoreNote) unit);
-        } else if (unit instanceof Phrase)
+        } else if (unit instanceof PhraseCall)
         {
-            Phrase phrase = (Phrase) unit;
+            PhraseCall  phraseCall = (PhraseCall) unit;
+            PhraseProto phrase = music.getPhrase(phraseCall.getPhraseName());
+            if(phrase == null)
+            {
+                throw new MuseRuntimeException("No prototype found for phrase " + phraseCall.getPhraseName());
+            }
             for(MusicUnit phraseUnit : phrase.getNotes())
             {
-                tick = addUnitToTrack(track, tick, phraseUnit);//addNoteToTrack(track, tick, note);
+                tick = addUnitToTrack(music, track, tick, phraseUnit);
             }
         } else if(unit instanceof Pause)
         {

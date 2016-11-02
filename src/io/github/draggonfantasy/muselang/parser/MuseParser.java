@@ -8,9 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by user on 30.10.16.
- */
 public class MuseParser
 {
     public static final int DEFAULT_VELOCITY = 127;
@@ -18,13 +15,10 @@ public class MuseParser
     private List<Token> tokens;
     private int pos;
 
-    private Map<String, Phrase> phrases;
-
     public Music parse(List<Token> tokens) throws MuseSyntaxException
     {
         this.tokens = tokens;
         this.pos = 0;
-        this.phrases = new HashMap<>();
 
         return musicProgram();
     }
@@ -68,7 +62,6 @@ public class MuseParser
         int duration = duration();
         if(duration == -1) return new ScoreNote(note, DEFAULT_DURATION, DEFAULT_VELOCITY);
 
-        syntaxErrorIf(duration == -1, "ScoreNote: expected duration but found " + token().getTokenId(), token().getLine(), token().getColumn());
         next();
         int velocity = integer();
         syntaxErrorIf(velocity == -1, "ScoreNote: expected velocity but found " + token().getTokenId(), token().getLine(), token().getColumn());
@@ -77,31 +70,27 @@ public class MuseParser
         return new ScoreNote(note, duration, velocity);
     }
 
-    private Phrase phrase() throws MuseSyntaxException
+    private PhraseProto phrase() throws MuseSyntaxException
     {
         if( !(token() instanceof TokenKeyword && token().getTokenStr().equals("phrase")) ) return null;
 
         next();
         syntaxErrorIf(!(token() instanceof TokenIdentifier),
-                      "Phrase: expected identifier but found " + token().getTokenId(), token().getLine(), token().getColumn());
+                      "PhraseProto: expected identifier but found " + token().getTokenId(), token().getLine(), token().getColumn());
         String identifier = ((TokenIdentifier) token()).getIdentifier();
         next();
 
         syntaxErrorIf(!(token() instanceof TokenOperator && token().getTokenStr().equals("{")),
-                      "Phrase: expected { but found " + token().getTokenId(), token().getLine(), token().getColumn());
+                      "PhraseProto: expected { but found " + token().getTokenId(), token().getLine(), token().getColumn());
 
         next();
         List<MusicUnit> phraseUnits = musicBlock();
 
         syntaxErrorIf(!(token() instanceof TokenOperator && token().getTokenStr().equals("}")),
-                      "Phrase: expected } but found " + token().getTokenId(), token().getLine(), token().getColumn());
+                      "PhraseProto: expected } but found " + token().getTokenId(), token().getLine(), token().getColumn());
         next();
 
-        Phrase phrase = new Phrase(identifier, phraseUnits);
-        syntaxErrorIf(phrases.containsKey(identifier), "Phrase: overriding phrases is not allowed: " + identifier, token().getLine(), token().getColumn());
-
-        phrases.put(identifier, phrase);
-        return phrase;
+        return new PhraseProto(identifier, phraseUnits);
     }
 
     private List<MusicUnit> musicBlock() throws MuseSyntaxException
@@ -116,10 +105,8 @@ public class MuseParser
             } else if (token() instanceof TokenIdentifier)
             {
                 String identifier = ((TokenIdentifier) token()).getIdentifier();
-                Phrase phrase = phrases.get(identifier);
-                syntaxErrorIf(phrase == null, "Unknown phrase '" + identifier + "'", token().getLine(), token().getColumn());
                 next();
-                unit = phrase;
+                unit = new PhraseCall(identifier);
                 units.add(unit);
             } else
             {
@@ -131,11 +118,16 @@ public class MuseParser
 
     private Music musicProgram() throws MuseSyntaxException
     {
-        //noinspection StatementWithEmptyBody
-        while( phrase() != null ) {}
+        Map<String, PhraseProto> phrases = new HashMap<>();
+        PhraseProto phrase;
+        while( (phrase = phrase()) != null )
+        {
+            phrases.put(phrase.getName(), phrase);
+        }
+
         List<MusicUnit> units = musicBlock();
 
-        return new Music(units);
+        return new Music(phrases, units);
     }
 
     private int integer()
