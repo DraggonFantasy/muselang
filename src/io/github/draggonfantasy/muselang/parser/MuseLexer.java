@@ -22,8 +22,20 @@ public class MuseLexer
         for(int i = 0; i < str.length(); ++i, ++column)
         {
             char c = str.charAt(i);
+
+            if( i < str.length()-1 && c == '/' && str.charAt(i+1) == '/' )
+            {
+                for(; i < str.length() && str.charAt(i) != '\n'; ++i)
+                {
+                    // Skip comment characters until new line is met
+                }
+                column = 0;
+                ++line;
+                continue;
+            }
             if( Character.isWhitespace(c) || singleCharTokens.indexOf(c) != -1 )
             {
+
                 Token token = recognizeToken( tokenStr.toString(), line, column - tokenStr.length() );
                 if(token != null) tokens.add(token);
 
