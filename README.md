@@ -1,3 +1,4 @@
+<img src="https://raw.githubusercontent.com/DraggonFantasy/muselang/master/icon.png" width="64" height="64">
 # Muselang
 Muselang is a music programming language. It's designed to be simple, concise and powerful enough to make music with it :)  
 How does it look? Here's simple melody written in Muselang:  
