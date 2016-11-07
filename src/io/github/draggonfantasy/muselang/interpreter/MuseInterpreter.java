@@ -42,6 +42,16 @@ public class MuseInterpreter
             {
                 tick = addUnitToTrack(music, track, tick, phraseUnit);
             }
+        } else if(unit instanceof Repeat)
+        {
+            Repeat repeat = (Repeat) unit;
+            for(int i = 0; i < repeat.getTimes(); ++i)
+            {
+                for(MusicUnit repeatUnit : repeat.getUnits())
+                {
+                    tick = addUnitToTrack(music, track, tick, repeatUnit);
+                }
+            }
         } else if(unit instanceof Pause)
         {
             tick += RESOLUTION / (((Pause)unit).getDuration() / 4f);

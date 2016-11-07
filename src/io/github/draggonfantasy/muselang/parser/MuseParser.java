@@ -93,6 +93,31 @@ public class MuseParser
         return new PhraseProto(identifier, phraseUnits);
     }
 
+    private Repeat repeat() throws MuseSyntaxException
+    {
+        if( !(token() instanceof TokenKeyword && token().getTokenStr().equals("repeat")) ) return null;
+
+        next();
+
+        int times = integer();
+        syntaxErrorIf(times == -1,
+                "Repeat: expected times integer but found " + token().getTokenId(), token().getLine(), token().getColumn());
+        next();
+
+        syntaxErrorIf(!(token() instanceof TokenOperator && token().getTokenStr().equals("{")),
+                "Repeat: expected { but found " + token().getTokenId(), token().getLine(), token().getColumn());
+
+
+        next();
+        List<MusicUnit> units = musicBlock();
+
+        syntaxErrorIf(!(token() instanceof TokenOperator && token().getTokenStr().equals("}")),
+                "PhraseProto: expected } but found " + token().getTokenId(), token().getLine(), token().getColumn());
+        next();
+
+        return new Repeat(units, times);
+    }
+
     private List<MusicUnit> musicBlock() throws MuseSyntaxException
     {
         List<MusicUnit> units = new ArrayList<>();
@@ -108,6 +133,12 @@ public class MuseParser
                 next();
                 unit = new PhraseCall(identifier);
                 units.add(unit);
+            } else if(token() instanceof TokenKeyword)
+            {
+                Repeat repeat = repeat();
+                if(repeat == null) throw new MuseSyntaxException("Illegal keyword " + token().getTokenId(), token().getLine(), token().getColumn());
+
+                units.add(repeat);
             } else
             {
                 break;

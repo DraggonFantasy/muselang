@@ -9,7 +9,7 @@ public class MuseLexer
 {
     private String singleCharTokens = "{}";
     private String[] keywords = new String[]{
-            "phrase", "pause", "quarter", "half", "eighth", "sixteenth", "q", "h", "e", "st"
+            "phrase", "repeat", "pause", "quarter", "half", "eighth", "sixteenth", "q", "h", "e", "st"
     };
 
     public List<Token> lex(String str)
