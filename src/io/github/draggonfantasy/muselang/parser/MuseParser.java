@@ -41,21 +41,9 @@ public class MuseParser
         return -1;
     }
 
-    private MusicUnit scoreNote() throws MuseSyntaxException
+    private ScoreNote scoreNote() throws MuseSyntaxException
     {
-        if( !(token() instanceof TokenNote) )
-        {
-            if( token() instanceof TokenKeyword && token().getTokenStr().equals("pause") )
-            {
-                next();
-                int duration = duration();
-                syntaxErrorIf(duration == -1, "ScoreNote: expected duration but found " + token().getTokenId(), token().getLine(), token().getColumn());
-                next();
-
-                return new Pause(duration);
-            }
-            return null;
-        }
+        if( !(token() instanceof TokenNote) ) return null;
         Note note = ((TokenNote) token()).getNote();
 
         next();
@@ -68,6 +56,18 @@ public class MuseParser
         next();
 
         return new ScoreNote(note, duration, velocity);
+    }
+
+    private Pause pause() throws MuseSyntaxException
+    {
+        if (!(token() instanceof TokenKeyword) || !token().getTokenStr().equals("pause")) return null;
+
+        next();
+        int duration = duration();
+        syntaxErrorIf(duration == -1, "ScoreNote: expected duration but found " + token().getTokenId(), token().getLine(), token().getColumn());
+        next();
+
+        return new Pause(duration);
     }
 
     private PhraseProto phrase() throws MuseSyntaxException
@@ -118,6 +118,35 @@ public class MuseParser
         return new Repeat(units, times);
     }
 
+    private Chord chord() throws MuseSyntaxException
+    {
+        if( !(token() instanceof TokenOperator) && token().getTokenStr().equals("(") ) return null;
+
+        next();
+
+        List<ScoreNote> notes = new ArrayList<>();
+
+        ScoreNote note = scoreNote();
+
+        if(note == null) throw new MuseSyntaxException("Chord must contain at least 1 note", token().getLine(), token().getColumn());
+        notes.add(note);
+        while( token() instanceof TokenOperator && token().getTokenStr().equals(",") )
+        {
+            next();
+
+            ScoreNote nextNote = scoreNote();
+            if(nextNote == null) throw new MuseSyntaxException("Chord: expected note but found " + token().getTokenId(), token().getLine(), token().getColumn());
+
+            notes.add(nextNote);
+        }
+
+        syntaxErrorIf(!((token() instanceof TokenOperator) && token().getTokenStr().equals(")")),
+                "Chord: expected ) but found " + token().getTokenId(), token().getLine(), token().getColumn());
+        next();
+
+        return new Chord(notes);
+    }
+
     private List<MusicUnit> musicBlock() throws MuseSyntaxException
     {
         List<MusicUnit> units = new ArrayList<>();
@@ -133,12 +162,30 @@ public class MuseParser
                 next();
                 unit = new PhraseCall(identifier);
                 units.add(unit);
+            } else if(token() instanceof TokenOperator && token().getTokenStr().equals("("))
+            {
+                Chord chord = chord();
+                if(chord == null) throw new MuseSyntaxException("MusicBlock: expected chord but found " + token().getTokenId(), token().getLine(), token().getColumn());
+
+                units.add(chord);
+
             } else if(token() instanceof TokenKeyword)
             {
                 Repeat repeat = repeat();
-                if(repeat == null) throw new MuseSyntaxException("Illegal keyword " + token().getTokenId(), token().getLine(), token().getColumn());
-
-                units.add(repeat);
+                if(repeat != null)
+                {
+                    units.add(repeat);
+                } else
+                {
+                    Pause pause = pause();
+                    if(pause != null)
+                    {
+                        units.add(pause);
+                    } else
+                    {
+                        throw new MuseSyntaxException("Illegal keyword " + token().getTokenId(), token().getLine(), token().getColumn());
+                    }
+                }
             } else
             {
                 break;

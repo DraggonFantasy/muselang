@@ -7,7 +7,7 @@ import java.util.List;
 
 public class MuseLexer
 {
-    private String singleCharTokens = "{}";
+    private String singleCharTokens = "{}(),";
     private String[] keywords = new String[]{
             "phrase", "repeat", "pause", "quarter", "half", "eighth", "sixteenth", "q", "h", "e", "st"
     };

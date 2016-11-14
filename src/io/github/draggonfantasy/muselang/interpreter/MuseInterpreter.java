@@ -52,6 +52,16 @@ public class MuseInterpreter
                     tick = addUnitToTrack(music, track, tick, repeatUnit);
                 }
             }
+        } else if(unit instanceof Chord)
+        {
+            Chord chord = (Chord) unit;
+            long nextTick = tick;
+            for(ScoreNote chordUnit : chord.getUnits())
+            {
+                long t = addNoteToTrack(track, tick, chordUnit);
+                if(nextTick < t) nextTick = t;
+            }
+            tick = nextTick;
         } else if(unit instanceof Pause)
         {
             tick += RESOLUTION / (((Pause)unit).getDuration() / 4f);
