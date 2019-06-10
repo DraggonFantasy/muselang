@@ -2,6 +2,7 @@
 # Muselang
 Muselang is a music programming language. It's designed to be simple, concise and powerful enough to make music with it :)  
 How does it look? Here's simple melody written in Muselang:  
+
 ```
 C5 4 100
 D5 4 100
@@ -11,8 +12,10 @@ G5 4 100
 A5 quarter 100
 B5 q 100
 ```
+
 As you may already guessed - this program plays an octave. `C5 4 100` means "play quarter note C of octave 5 with velocity 100". Also you can omit octave number for 5th octave. So `C5` and `C` is a same note in Muselang.  
 Muselang also support *phrases*:
+
 ```
 phrase hello {
     C eighth 100
@@ -33,6 +36,7 @@ phrase main {
 
 main
 ```
+
 You can play melodies written in Muselang using Muselang interpreter or you can export a melody as a MIDI file.
 
 ## Why use Muselang?
